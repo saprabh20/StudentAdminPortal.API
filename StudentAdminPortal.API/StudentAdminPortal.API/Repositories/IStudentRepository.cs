@@ -1,4 +1,5 @@
-﻿using StudentAdminPortal.API.Data_Models;
+﻿using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
+using StudentAdminPortal.API.Data_Models;
 
 namespace StudentAdminPortal.API.Repositories
 {
@@ -6,5 +7,8 @@ namespace StudentAdminPortal.API.Repositories
     {
         Task<List<Student>> GetStudentsAsync();
         Task<Student> GetStudentAsync(Guid studentID);
+        Task<List<Gender>> GetGendersAsync();
+        Task<bool> Exists(Guid studentsId);
+        Task<Student> UpdateStudent(Guid studentId, Student request);
     }
 }
