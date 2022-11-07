@@ -25,7 +25,7 @@ namespace StudentAdminPortal.API.Controllers
         public async Task<IActionResult> GetAllStudentsAsync()
         {
             var students = await studentRepository.GetStudentsAsync();
-            
+
             return Ok(mapper.Map<List<Student>>(students));
         }
 
@@ -37,13 +37,13 @@ namespace StudentAdminPortal.API.Controllers
             var student = await studentRepository.GetStudentAsync(studentId);
 
             //return student
-            if(student == null)
+            if (student == null)
             {
                 return NotFound();
             }
             else
             {
-                return Ok(mapper.Map<Student>(student));    
+                return Ok(mapper.Map<Student>(student));
             }
         }
 
@@ -51,16 +51,16 @@ namespace StudentAdminPortal.API.Controllers
         [Route("[controller]/{studentId:guid}")]
         public async Task<IActionResult> UpdateStudentAsync([FromRoute] Guid studentId, [FromBody] UpdateStudentRequest request)
         {
-            if(await studentRepository.Exists(studentId))
+            if (await studentRepository.Exists(studentId))
             {
                 //Update details
                 var updatedStudent = await studentRepository.UpdateStudent(studentId, mapper.Map<Data_Models.Student>(request));
-                if(updatedStudent != null)
+                if (updatedStudent != null)
                 {
                     return Ok(mapper.Map<Student>(updatedStudent));
                 }
             }
-            return NotFound();            
+            return NotFound();
         }
 
         [HttpDelete]
@@ -72,7 +72,7 @@ namespace StudentAdminPortal.API.Controllers
                 var student = await studentRepository.DeleteStudent(studentId);
                 return Ok(mapper.Map<Student>(student));
             }
-            return NotFound(); 
+            return NotFound();
         }
 
         [HttpPost]
@@ -89,17 +89,36 @@ namespace StudentAdminPortal.API.Controllers
         [Route("[controller]/{studentId:guid}/upload-image")]
         public async Task<IActionResult> UploadImage([FromRoute] Guid studentId, IFormFile profileImage)
         {
-            //check if student exists
-            if(await studentRepository.Exists(studentId))
+            var validExtensions = new List<string>
             {
-                var fileName = Guid.NewGuid() + Path.GetExtension(profileImage.FileName );
-                var fileImagePath = await imageRepository.Upload(profileImage, fileName);
-
-                if(await studentRepository.UpdateProfileImage(studentId, fileImagePath))
+                ".jpeg",
+                ".png",
+                ".jpg",
+                ".gif"
+            };
+            //check if student exists
+            if (profileImage != null && profileImage.Length>0)
+            {
+                var extension = Path.GetExtension(profileImage.FileName);
+                if (validExtensions.Contains(extension))
                 {
-                    return Ok(fileImagePath);
+                    if (await studentRepository.Exists(studentId))
+                    {
+                        var fileName = Guid.NewGuid() + Path.GetExtension(profileImage.FileName);
+                        var fileImagePath = await imageRepository.Upload(profileImage, fileName);
+
+                        if (await studentRepository.UpdateProfileImage(studentId, fileImagePath))
+                        {
+                            return Ok(fileImagePath);
+                        }
+                        return StatusCode(StatusCodes.Status500InternalServerError, "Error uploading image");
+
+                    }
                 }
-                return StatusCode(StatusCodes.Status500InternalServerError, "Error uploading image");
+
+                return BadRequest("This is not a valid Image Format");
+
+                
 
             }
             return NotFound();
